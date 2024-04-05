@@ -6,11 +6,20 @@ using UnityEngine.InputSystem;
 
 public class PlayerScript : MonoBehaviour{
 
+    [Header("Movement")]
     private Controls input = null;
     private Vector2 moveVector = Vector2.zero;
+    public float speed;
+
+
+    [Header("Animation")]
+    private Animator animator;
+    private int idleHash = Animator.StringToHash("playerIdle");
+    private int runHash = Animator.StringToHash("playerRun");
 
     private void Awake(){
         input = new Controls();
+        animator = GetComponent<Animator>();
     }
 
     private void OnEnable(){
@@ -34,7 +43,26 @@ public class PlayerScript : MonoBehaviour{
     }
 
     private void FixedUpdate(){
-        transform.position += (Vector3)moveVector;
+        transform.position += (Vector3)moveVector * speed;
+    }
+
+    private void Update(){
+        animator.StopPlayback();
+        animator.CrossFade(getState(), 0, 0);
+
+         Vector2 dir = getMoudePosition() - transform.position;
+        if(dir.x != 0){
+            transform.localScale = new Vector3(Mathf.Sign(dir.x), 1, 1);
+        }
+    }
+
+    private int getState(){
+        if(moveVector != Vector2.zero) return runHash;
+        return idleHash;
+    }
+
+    private Vector3 getMoudePosition(){
+        return Camera.main.ScreenToWorldPoint(Mouse.current.position.ReadValue());
     }
 
 
