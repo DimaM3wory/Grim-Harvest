@@ -56,5 +56,5 @@
         "temp/": true,
         "Temp/": true
     },
-    "dotnet.defaultSolution": "RKPP_game9b.sln"
+    "dotnet.defaultSolution": "Grim Harvest.sln"
 }
