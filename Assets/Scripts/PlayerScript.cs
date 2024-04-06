@@ -6,32 +6,41 @@ using UnityEngine.InputSystem;
 
 public class PlayerScript : MonoBehaviour{
 
-    [Header("Movement")]
-    private Controls input = null;
-    private Vector2 moveVector = Vector2.zero;
-    public float speed;
+    [Header("Player")]
+    private SpriteRenderer spriteRenderer;
 
+    [Header("Movement")]
+    public float speed;
+    private Controls controls;
+    private Vector2 moveVector;
+    private Rigidbody2D rigidBody;
+    
 
     [Header("Animation")]
     private Animator animator;
     private int idleHash = Animator.StringToHash("playerIdle");
     private int runHash = Animator.StringToHash("playerRun");
 
+    [Header("Shooting")]
+    public Transform aim;
+
     private void Awake(){
-        input = new Controls();
+        controls = new Controls();
         animator = GetComponent<Animator>();
+        rigidBody = GetComponent<Rigidbody2D>();
+        spriteRenderer = GetComponent<SpriteRenderer>();
     }
 
     private void OnEnable(){
-        input.Enable();
-        input.Player.Movement.performed += OnMovementPerformed;
-        input.Player.Movement.canceled += OnMovementCanceled;
+        controls.Enable();
+        controls.Player.Movement.performed += OnMovementPerformed;
+        controls.Player.Movement.canceled += OnMovementCanceled;
     }
 
     private void OnDisable(){
-        input.Disable();
-        input.Player.Movement.performed -= OnMovementPerformed;
-        input.Player.Movement.canceled -= OnMovementCanceled;
+        controls.Disable();
+        controls.Player.Movement.performed -= OnMovementPerformed;
+        controls.Player.Movement.canceled -= OnMovementCanceled;
     }
 
     private void OnMovementPerformed(InputAction.CallbackContext context){
@@ -43,25 +52,34 @@ public class PlayerScript : MonoBehaviour{
     }
 
     private void FixedUpdate(){
-        transform.position += (Vector3)moveVector * speed;
+        rigidBody.velocity = moveVector * speed * Time.fixedDeltaTime;
     }
 
     private void Update(){
         animator.StopPlayback();
         animator.CrossFade(getState(), 0, 0);
 
-         Vector2 dir = getMoudePosition() - transform.position;
+        Vector2 dir = (getPointerPosition() - transform.position).normalized;
+        float angle = Mathf.Atan2(dir.y, dir.x) * Mathf.Rad2Deg;
         if(dir.x != 0){
             transform.localScale = new Vector3(Mathf.Sign(dir.x), 1, 1);
+        }
+
+        aim.eulerAngles = new Vector3(0, 0, angle);
+
+        if(angle > 90 || angle < -90){
+            aim.localScale = new Vector3(-1, -1, 1);
+        } else{
+            aim.localScale = new Vector3(1, 1, 1);
         }
     }
 
     private int getState(){
-        if(moveVector != Vector2.zero) return runHash;
+        if(rigidBody.velocity != Vector2.zero) return runHash;
         return idleHash;
     }
 
-    private Vector3 getMoudePosition(){
+    private Vector3 getPointerPosition(){
         return Camera.main.ScreenToWorldPoint(Mouse.current.position.ReadValue());
     }
 
