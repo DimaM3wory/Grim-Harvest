@@ -1,6 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
-using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -26,6 +23,7 @@ public class PlayerScript : MonoBehaviour{
 
     private void Awake(){
         controls = new Controls();
+
         animator = GetComponent<Animator>();
         rigidBody = GetComponent<Rigidbody2D>();
         spriteRenderer = GetComponent<SpriteRenderer>();
@@ -56,32 +54,31 @@ public class PlayerScript : MonoBehaviour{
     }
 
     private void Update(){
-        animator.StopPlayback();
-        animator.CrossFade(getState(), 0, 0);
+        UpdateAnimation();
+        UpdateAimDirection();
+    }
 
-        Vector2 dir = (getPointerPosition() - transform.position).normalized;
+    void UpdateAnimation(){
+        if (rigidBody.velocity != Vector2.zero)
+            animator.Play(runHash);
+        else
+            animator.Play(idleHash);
+    }
+
+    void UpdateAimDirection(){
+        Vector2 dir = (GetPointerPosition() - transform.position).normalized;
         float angle = Mathf.Atan2(dir.y, dir.x) * Mathf.Rad2Deg;
-        if(dir.x != 0){
-            transform.localScale = new Vector3(Mathf.Sign(dir.x), 1, 1);
-        }
 
+        transform.localScale = new Vector3(Mathf.Sign(dir.x), 1, 1);
         aim.eulerAngles = new Vector3(0, 0, angle);
 
-        if(angle > 90 || angle < -90){
+        if (Mathf.Abs(angle) > 90)
             aim.localScale = new Vector3(-1, -1, 1);
-        } else{
-            aim.localScale = new Vector3(1, 1, 1);
-        }
+        else
+            aim.localScale = Vector3.one;
     }
 
-    private int getState(){
-        if(rigidBody.velocity != Vector2.zero) return runHash;
-        return idleHash;
-    }
-
-    private Vector3 getPointerPosition(){
+    private Vector3 GetPointerPosition(){
         return Camera.main.ScreenToWorldPoint(Mouse.current.position.ReadValue());
     }
-
-
 }
